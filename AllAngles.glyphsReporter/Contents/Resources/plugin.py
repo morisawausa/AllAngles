@@ -134,7 +134,7 @@ class AllAngles(ReporterPlugin):
 		# 1.0 Get the angle from the segment
 		x1, y1, x2, y2 = get_points_from_line(segment)
 		dx, dy = x2 - x1, y2 - y1
-		theta = get_angle_from_points(dx, dy)
+		theta = get_vector_angle(dx, dy)
 
 		# 1.1 Prettyprint the Angle with the degree sign,
 		# to the desired precision
@@ -157,7 +157,7 @@ class AllAngles(ReporterPlugin):
 		# 4.0 Draw everything to the canvas.
 		color.set()
 		self.draw_indicator((x_mid, y_mid), (x_mid_offset, y_mid_offset))
-		self.drawTextAtPoint(prettyAngle, NSPoint(x_text_anchor, y_text_anchor), fontColor=color )
+		self.drawTextAtPoint(pretty_angle, NSPoint(x_text_anchor, y_text_anchor), fontColor=color )
 
 
 	@objc.python_method
@@ -183,7 +183,7 @@ class AllAngles(ReporterPlugin):
 		"""
 		self.show_handles = not self.show_handles
 		menuName = 'Hide Handle Angles' if self.show_handles else 'Show Handle Angles'
-		self.generalContextMenus[1] = {'name': Glyphs.localize({'en': menuName}), 'action': self.toggle_lines}
+		self.generalContextMenus[1] = {'name': Glyphs.localize({'en': menuName}), 'action': self.toggle_handles}
 
 
 	@objc.python_method
