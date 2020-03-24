@@ -18,6 +18,8 @@ from AppKit import NSColor
 from GlyphsApp import *
 from GlyphsApp.plugins import *
 
+LINE_COLOR=(56/256, 217/256, 137/256, 1)
+
 def get_normed_vector(x, y):
 	length = sqrt(x**2 + y**2)
 	return x / length, y / length
@@ -59,13 +61,13 @@ class AllAngles(ReporterPlugin):
 				angle = get_angle_from_points(x1, y1, x2, y2)
 				prettyAngle = u"%s°" % str(round(angle, 1))
 
-				offset_scale = 18/self.getScale()
+				offset_scale = 14/self.getScale()
 				x_mid, y_mid = get_intermediate_from_points(x1, y1, x2, y2)
 				x_norm, y_norm = get_normed_vector(x2 - x1, y2 - y1)
 				x_orth, y_orth = get_rotated_vector(x_norm, y_norm)
 				x_mid_offset, y_mid_offset = x_mid+offset_scale*x_orth, y_mid+offset_scale*y_orth
 
-				color = NSColor.colorWithCalibratedRed_green_blue_alpha_( 52/256, 235/256, 203/256, 1 )
+				color = NSColor.colorWithCalibratedRed_green_blue_alpha_(*LINE_COLOR)
 
 				x_text_anchor, y_text_anchor = self.get_text_anchor(prettyAngle, x_mid, y_mid, x_mid_offset, y_mid_offset)
 
