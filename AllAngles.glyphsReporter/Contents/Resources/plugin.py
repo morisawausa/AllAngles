@@ -109,6 +109,20 @@ class AllAngles(ReporterPlugin):
 
 
 	@objc.python_method
+	def refresh_view(self):
+		"""The refresh view function forces a repaint of the EditView,
+		even the user has not interacted. useful for updating views based on
+		settings changes or external events.
+		"""
+		try:
+			current_tab_view = Glyphs.font.currentTab
+			if current_tab_view:
+				current_tab_view.graphicView().setNeedsDisplay_(True)
+		except:
+			pass
+
+
+	@objc.python_method
 	def foreground(self, layer):
 		"""Called whenever the Editview is updated through a UI interaction.
 		Receives the active layer as a parameter. This method is responsible for
@@ -171,6 +185,7 @@ class AllAngles(ReporterPlugin):
 		self.show_lines = not self.show_lines
 		menuName = 'Hide Line Angles' if self.show_lines else 'Show Line Angles'
 		self.generalContextMenus[0] = {'name': Glyphs.localize({'en': menuName}), 'action': self.toggle_lines}
+		self.refresh_view()
 
 
 	@objc.python_method
@@ -184,6 +199,7 @@ class AllAngles(ReporterPlugin):
 		self.show_handles = not self.show_handles
 		menuName = 'Hide Handle Angles' if self.show_handles else 'Show Handle Angles'
 		self.generalContextMenus[1] = {'name': Glyphs.localize({'en': menuName}), 'action': self.toggle_handles}
+		self.refresh_view()
 
 
 	@objc.python_method
