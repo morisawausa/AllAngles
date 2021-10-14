@@ -1,4 +1,5 @@
 # encoding: utf-8
+from __future__ import division, print_function, unicode_literals
 
 ###########################################################################################################
 #
@@ -14,7 +15,6 @@
 #
 ###########################################################################################################
 
-from __future__ import division, print_function, unicode_literals
 from math import atan2, sqrt, pi, degrees, cos, sin
 import objc
 from AppKit import NSColor
@@ -38,6 +38,7 @@ PRECISION=1
 # as a list of components, and return components (or angles in degrees).
 # =======
 
+@objc.python_method
 def get_unit_vector(x, y):
 	"""Given 2d vector compenents x and y as floats,
 	returns the unit vector in the same direction
@@ -47,6 +48,7 @@ def get_unit_vector(x, y):
 	return x / length, y / length
 
 
+@objc.python_method
 def get_vector_angle(x, y):
 	"""Given 2d vector compenents x and y as floats,
 	returns the degrees from the horizontal of that vector.
@@ -60,6 +62,7 @@ def get_vector_angle(x, y):
 	return degrees(atan2(x_norm, y_norm)) % 180
 
 
+@objc.python_method
 def get_rotated_vector(x, y, angle=3*pi/2):
 	"""Given 2d vector compenents x and y as floats,
 	rotate that vector by "angle" degrees, and return
@@ -68,6 +71,7 @@ def get_rotated_vector(x, y, angle=3*pi/2):
 	return cos(angle)*x - sin(angle)*y, sin(angle)*x + cos(angle)*y
 
 
+@objc.python_method
 def get_intermediate_from_points(x1, y1, x2, y2, t=0.5):
 	"""Given a line defined by two vectors as component floats,
 	return a point interpolated along the line between the two vectors,
@@ -76,6 +80,7 @@ def get_intermediate_from_points(x1, y1, x2, y2, t=0.5):
 	return t * (x2 - x1) + x1, t * (y2 - y1) + y1
 
 
+@objc.python_method
 def get_points_from_line(segment):
 	"""Given a pair of NSPoints (a segment representing a line from Glyphs)
 	return points defining that line as a list of component floats.
@@ -103,8 +108,8 @@ class AllAngles(ReporterPlugin):
 		"""
 		self.menuName = Glyphs.localize({'en': u'All Angles'})
 		self.generalContextMenus = [
-			{'name': Glyphs.localize({'en': 'Hide Line Angles '}), 'action': self.toggle_lines},
-			{'name': Glyphs.localize({'en': 'Show Handle Angles'}), 'action': self.toggle_handles}
+			{'name': Glyphs.localize({'en': 'Hide Line Angles '}), 'action': self.toggleLines},
+			{'name': Glyphs.localize({'en': 'Show Handle Angles'}), 'action': self.toggleHandles}
 		]
 
 
@@ -132,15 +137,17 @@ class AllAngles(ReporterPlugin):
 		for path in layer.paths:
 			for segment in path.segments:
 				if len(segment) == 2 and self.show_lines:
-					self.render_indicator_for_line_segment(segment, draw_color=LINE_COLOR)
+					p1, p2 = segment[0], segment[1]
+					self.render_indicator_for_line_segment((p1, p2), draw_color=LINE_COLOR)
 				elif len(segment) == 4 and self.show_handles:
-					p1, p2, p3, p4 = segment
+					p1, p2, p3, p4 = segment[0], segment[1], segment[2], segment[3]
 					quad_segment_1 = (p1, p2)
 					quad_segment_2 = (p3, p4)
 					self.render_indicator_for_line_segment(quad_segment_1, draw_color=HANDLE_COLOR)
 					self.render_indicator_for_line_segment(quad_segment_2, draw_color=HANDLE_COLOR)
 
 
+	@objc.python_method
 	def render_indicator_for_line_segment(self, segment, draw_color=LINE_COLOR):
 		"""Given a segment from glyphs (a list of two NSPoints), draw an indicator
 		showing the angle of that segment with respect to the horizontal in the given "draw_color".
@@ -173,9 +180,7 @@ class AllAngles(ReporterPlugin):
 		self.draw_indicator((x_mid, y_mid), (x_mid_offset, y_mid_offset))
 		self.drawTextAtPoint(pretty_angle, NSPoint(x_text_anchor, y_text_anchor), fontColor=color )
 
-
-	@objc.python_method
-	def toggle_lines(self):
+	def toggleLines(self):
 		"""Toggles whether or not to show line angles in the canvas. Also
 		refreshes the name of the menu item so that it makes sense.
 
@@ -184,12 +189,11 @@ class AllAngles(ReporterPlugin):
 		"""
 		self.show_lines = not self.show_lines
 		menuName = 'Hide Line Angles' if self.show_lines else 'Show Line Angles'
-		self.generalContextMenus[0] = {'name': Glyphs.localize({'en': menuName}), 'action': self.toggle_lines}
+		self.generalContextMenus[0] = {'name': Glyphs.localize({'en': menuName}), 'action': self.toggleLines}
 		self.refresh_view()
 
 
-	@objc.python_method
-	def toggle_handles(self):
+	def toggleHandles(self):
 		"""Toggles whether or not to show handle angles in the canvas. Also
 		refreshes the name of the menu item so that it makes sense.
 
@@ -198,7 +202,7 @@ class AllAngles(ReporterPlugin):
 		"""
 		self.show_handles = not self.show_handles
 		menuName = 'Hide Handle Angles' if self.show_handles else 'Show Handle Angles'
-		self.generalContextMenus[1] = {'name': Glyphs.localize({'en': menuName}), 'action': self.toggle_handles}
+		self.generalContextMenus[1] = {'name': Glyphs.localize({'en': menuName}), 'action': self.toggleHandles}
 		self.refresh_view()
 
 

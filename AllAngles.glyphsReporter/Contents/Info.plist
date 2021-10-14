@@ -4,8 +4,6 @@
 <dict>
 	<key>CFBundleDevelopmentRegion</key>
 	<string>English</string>
-	<key>CFBundleDisplayName</key>
-	<string>AllAngles</string>
 	<key>CFBundleExecutable</key>
 	<string>plugin</string>
 	<key>CFBundleIdentifier</key>
@@ -14,25 +12,23 @@
 	<string>6.0</string>
 	<key>CFBundleName</key>
 	<string>AllAngles</string>
-	<key>CFBundlePackageType</key>
-	<string>BNDL</string>
 	<key>CFBundleVersion</key>
 	<string>AllAngles</string>
 	<key>CFBundleShortVersionString</key>
-	<string>1.0.0</string>
+	<string>1.0.1</string>
 	<key>UpdateFeedURL</key>
 	<string>http://occupantfonts.com</string>
 	<key>productPageURL</key>
 	<string>http://occupantfonts.com</string>
 	<key>productReleaseNotes</key>
-	<string>Initial Release.</string>
+	<string>Glyphs 3 Release.</string>
 	<key>NSHumanReadableCopyright</key>
 	<string>Copyright, Occupant Fonts, 2020</string>
 	<key>NSPrincipalClass</key>
 	<string>AllAngles</string>
 	<key>PyMainFileNames</key>
 	<array>
-		<string>../MacOS/main.py</string>
+		<string>plugin.py</string>
 	</array>
 </dict>
 </plist>
