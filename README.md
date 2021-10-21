@@ -33,5 +33,3 @@ By default, `All Angles` only shows you the line angles, and not the handle angl
 ## Bugs, Improvements, and Requests
 
 Bugs and feature requests can be registered as issues on this Github repository.
-
-**Known Issue:** Unfortunately, Glyphs does not redraw the edit view when a context menu is clicked. So, the indicators will not actually be turned on or off after you click the context menu. You need to  scroll, zoom, or click in the Tab, and force a redraw event that way.
