@@ -18,7 +18,7 @@ To install the plugin:
 
 5. Restart Glyphs.
 
-You should be good to go. The reporter should show up in the main menu as "Show All Angles", and in Reporter Toggler, if you have that plugin installed.
+You should be good to go. The reporter should show up in the main menu as **Show All Angles**, and **All Angles** in the Reporter Toggler, if you have that plugin installed.
 
 ## Usage
 
