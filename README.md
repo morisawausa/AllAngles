@@ -1,6 +1,6 @@
 # All Angles Glyphs Reporter Plugin
 
-**It’s the Occupant Fonts All Angles Reporter Plugin!** This Glyphs reporter shows the angle from the horizontal of all straight lines in the active layer of the current Glyphs tab. This includes straight line segments, and the handles	of curves. Angles are given to 0.1 degree of precision. All indicators can be toggled	on and off in the context (right-click) menu, while the reporter is active.
+**It’s the Occupant Fonts All Angles Reporter Plugin!** This Glyphs reporter shows the angle from the horizontal of all straight lines in the active layer of the current Glyphs tab. This includes straight line segments, and the handles	of curves. Angles are given to 0.1 degree of precision. All indicators can be toggled	on and off in the context (right-click) menu, while the reporter is active. You can also assign a keyboard shortcut in the Glyphs settings to View > Show All Angles.
 
 ![All Angles Plugin in use](./Images/application-window.png)
 
