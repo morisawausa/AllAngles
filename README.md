@@ -26,10 +26,15 @@ Toggle the reporter and look at a glyph’s outlines to see the indicators.
 
 ![Image of all indicators](./Images/showing-indicators.png)
 
-By default, `All Angles` only shows you the line angles, and not the handle angles. You can toggle both the line angles and handle angles on and off in the context menu, to control how much information you're seeing.
+By default, `All Angles` only shows you the line angles, and not the handle angles. You can toggle both the line angles (`Show Line Angles`) and handle angles (`Show Handle Angles`) on and off in the context menu, to control how much information you’re seeing.
 
 ![Image of all indicators](./Images/toggling-indicators.png)
 
 ## Bugs, Improvements, and Requests
 
 Bugs and feature requests can be registered as issues on this Github repository.
+
+## Other Similar Tools
+
+- There is a [Show Coordinates Distance Angle](https://github.com/michaelrafailyk/ShowCoordinatesDistanceAngle) plugin that can show angles and details of selected segments.
+
