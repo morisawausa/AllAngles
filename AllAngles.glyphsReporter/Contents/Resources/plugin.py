@@ -75,12 +75,36 @@ def get_intermediate_from_points(x1, y1, x2, y2, t=0.5):
 	return t * (x2 - x1) + x1, t * (y2 - y1) + y1
 
 
-def get_points_from_line(segment):
-	"""Given a pair of NSPoints (a segment representing a line from Glyphs)
-	return points defining that line as a list of component floats.
-	"""
-	start, end = segment
-	return start.x, start.y, end.x, end.y
+def determine_quadrant(x1, y1, x2, y2):
+	# Calculate the differences
+	dx = x2 - x1
+	dy = y2 - y1
+
+	# Calculate the angle in degrees
+	angle = atan2(dy, dx) * 180 / pi
+	angle += 90
+	# Normalize the angle to [0, 360)
+	if angle < 0:
+		angle += 360
+
+	# Determine the quadrant
+	if angle >= 337.5 or angle < 22.5:
+		return "right"
+	elif angle >= 22.5 and angle < 67.5:
+		return "topright"
+	elif angle >= 67.5 and angle < 112.5:
+		return "topcenter"
+	elif angle >= 112.5 and angle < 157.5:
+		return "topleft"
+	elif angle >= 157.5 and angle < 202.5:
+		return "left"
+	elif angle >= 202.5 and angle < 247.5:
+		return "bottomleft"
+	elif angle >= 247.5 and angle < 292.5:
+		return "bottomcenter"
+	else:
+		return "bottomright"
+
 
 bundle = NSBundle.bundleForClass_(GSFont)
 objc.loadBundleFunctions(bundle, globals(), [("GSFloatToStringWithPrecisionLocalized", b'@di')])
@@ -131,22 +155,20 @@ class AllAngles(ReporterPlugin):
 		for path in layer.paths:
 			for segment in path.segments:
 				if len(segment) == 2 and self.show_lines:
-					p1, p2 = segment[0], segment[1]
-					self.render_indicator_for_line_segment((p1, p2), draw_color=LINE_COLOR)
+					self.render_indicator_for_line(segment[0], segment[1], draw_color=LINE_COLOR)
 				elif len(segment) == 4 and self.show_handles:
-					p1, p2, p3, p4 = segment[0], segment[1], segment[2], segment[3]
-					quad_segment_1 = (p1, p2)
-					quad_segment_2 = (p3, p4)
-					self.render_indicator_for_line_segment(quad_segment_1, draw_color=HANDLE_COLOR)
-					self.render_indicator_for_line_segment(quad_segment_2, draw_color=HANDLE_COLOR)
+					self.render_indicator_for_line(segment[0], segment[1], draw_color=HANDLE_COLOR)
+					self.render_indicator_for_line(segment[2], segment[3], draw_color=HANDLE_COLOR)
 
 	@objc.python_method
-	def render_indicator_for_line_segment(self, segment, draw_color=LINE_COLOR):
+	def render_indicator_for_line(self, p1, p2, draw_color=LINE_COLOR):
 		"""Given a segment from glyphs (a list of two NSPoints), draw an indicator
 		showing the angle of that segment with respect to the horizontal in the given "draw_color".
 		"""
 		# 1.0 Get the angle from the segment
-		x1, y1, x2, y2 = get_points_from_line(segment)
+		x1, y1 = p1.x, p1.y
+		x2, y2 = p2.x, p2.y
+
 		dx, dy = x2 - x1, y2 - y1
 		theta = get_vector_angle(dx, dy)
 
@@ -164,12 +186,12 @@ class AllAngles(ReporterPlugin):
 
 		# 3.0 Generate the anchor for the text so that it's positioned more or less
 		# Appropriately relative to the indicator line.
-		x_text_anchor, y_text_anchor = self.get_text_anchor(pretty_angle, x_mid, y_mid, x_mid_offset, y_mid_offset)
+		align = determine_quadrant(x1, y1, x2, y2)
 
 		# 4.0 Draw everything to the canvas.
 		draw_color.set()
 		self.draw_indicator((x_mid, y_mid), (x_mid_offset, y_mid_offset))
-		self.drawTextAtPoint(pretty_angle, NSPoint(x_text_anchor, y_text_anchor), fontColor=draw_color)
+		self.drawTextAtPoint(pretty_angle, NSPoint(x_mid_offset, y_mid_offset), fontColor=draw_color, align=align)
 
 	def toggleLines(self):
 		"""Toggles whether or not to show line angles in the canvas. Also
@@ -205,37 +227,6 @@ class AllAngles(ReporterPlugin):
 		linePath.lineToPoint_(end)
 		linePath.setLineWidth_(1 / self.getScale())
 		linePath.stroke()
-
-	@objc.python_method
-	def get_text_anchor(self, text, x1, y1, x2, y2):
-		"""Given a line as a pair of endpoints (a list of coordinate floats),
-		create an offset text-anchor point such that the given "text" is well-aligned
-		to the specified line, and return the anchor point as a pair of floats.
-		"""
-		CHARWIDTH = 6  # Magic number for approximating the width of a drawn character
-		CHARHEIGHT = 12  # Magic number for approximating the height of a drawn character
-		scale = self.getScale()
-		o_x = len(text) / scale
-		o_y = 1 / scale
-		buffer = 8 / scale
-
-		x_anchor, y_anchor = x2, y2
-
-		if x2 < x1:
-			x_anchor -= CHARWIDTH * o_x
-		elif x2 == x1:
-			x_anchor -= CHARWIDTH * o_x / 3
-			y_anchor += buffer if y2 > y1 else -buffer * 0.8
-
-		if y2 < y1:
-			y_anchor -= CHARHEIGHT * o_y
-		elif y2 == y1:
-			y_anchor -= (CHARHEIGHT / 2) * o_y
-			x_anchor += buffer if x2 > x1 else -buffer
-		else:
-			y_anchor -= (CHARHEIGHT / 2) * o_y
-
-		return x_anchor, y_anchor
 
 	@objc.python_method
 	def __file__(self):
