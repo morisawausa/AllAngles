@@ -38,7 +38,7 @@ PRECISION = 1
 # as a list of components, and return components (or angles in degrees).
 # =======
 def get_unit_vector(x, y):
-	"""Given 2d vector compenents x and y as floats,
+	"""Given 2d vector components x and y as floats,
 	returns the unit vector in the same direction
 	as the given vector (x, y).
 	"""
@@ -47,7 +47,7 @@ def get_unit_vector(x, y):
 
 
 def get_vector_angle(x, y):
-	"""Given 2d vector compenents x and y as floats,
+	"""Given 2d vector components x and y as floats,
 	returns the degrees from the horizontal of that vector.
 	The return value is clamped into the range [0, 180), so that
 	angles in the bottom two quadrants of the unit circle are
@@ -60,7 +60,7 @@ def get_vector_angle(x, y):
 
 
 def get_rotated_vector(x, y, angle=3 * pi / 2):
-	"""Given 2d vector compenents x and y as floats,
+	"""Given 2d vector components x and y as floats,
 	rotate that vector by "angle" degrees, and return
 	the components of the rotated vector.
 	"""
