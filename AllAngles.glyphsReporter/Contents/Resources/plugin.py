@@ -117,7 +117,7 @@ class AllAngles(ReporterPlugin):
 		try:
 			current_tab_view = Glyphs.font.currentTab
 			if current_tab_view:
-				current_tab_view.graphicView().setNeedsDisplay_(True)
+				current_tab_view.redraw()
 		except:
 			pass
 
