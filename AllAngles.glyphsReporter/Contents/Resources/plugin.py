@@ -28,8 +28,8 @@ from GlyphsApp.plugins import ReporterPlugin
 #    When printing angles.
 # =======
 
-LINE_COLOR = (56 / 256, 217 / 256, 137 / 256, 1)
-HANDLE_COLOR = (217 / 256, 56 / 256, 107 / 256, 1)
+LINE_COLOR = NSColor.colorWithCalibratedRed_green_blue_alpha_(56 / 256, 217 / 256, 137 / 256, 1)
+HANDLE_COLOR = NSColor.colorWithCalibratedRed_green_blue_alpha_(217 / 256, 56 / 256, 107 / 256, 1)
 PRECISION = 1
 
 
@@ -159,16 +159,14 @@ class AllAngles(ReporterPlugin):
 		x_orth, y_orth = get_rotated_vector(x_norm, y_norm)
 		x_mid_offset, y_mid_offset = x_mid + offset_scale * x_orth, y_mid + offset_scale * y_orth
 
-		color = NSColor.colorWithCalibratedRed_green_blue_alpha_(*draw_color)
-
 		# 3.0 Generate the anchor for the text so that it's positioned more or less
 		# Appropriately relative to the indicator line.
 		x_text_anchor, y_text_anchor = self.get_text_anchor(pretty_angle, x_mid, y_mid, x_mid_offset, y_mid_offset)
 
 		# 4.0 Draw everything to the canvas.
-		color.set()
+		draw_color.set()
 		self.draw_indicator((x_mid, y_mid), (x_mid_offset, y_mid_offset))
-		self.drawTextAtPoint(pretty_angle, NSPoint(x_text_anchor, y_text_anchor), fontColor=color)
+		self.drawTextAtPoint(pretty_angle, NSPoint(x_text_anchor, y_text_anchor), fontColor=draw_color)
 
 	def toggleLines(self):
 		"""Toggles whether or not to show line angles in the canvas. Also
