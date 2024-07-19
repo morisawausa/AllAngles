@@ -109,6 +109,8 @@ def determine_quadrant(x1, y1, x2, y2):
 bundle = NSBundle.bundleForClass_(GSFont)
 objc.loadBundleFunctions(bundle, globals(), [("GSFloatToStringWithPrecisionLocalized", b'@di')])
 
+Glyphs.registerDefault("AllAnglesShowLineAngles", True)
+
 
 # =======
 # Reporter Plugin Class.
@@ -116,20 +118,18 @@ objc.loadBundleFunctions(bundle, globals(), [("GSFloatToStringWithPrecisionLocal
 # =======
 class AllAngles(ReporterPlugin):
 
-	# Whether to show line angles
-	show_lines = True
-
-	# Whether to show handle angles
-	show_handles = False
-
 	@objc.python_method
 	def settings(self):
 		"""Registers basic settings and default context menus.
 		"""
-		self.menuName = Glyphs.localize({'en': u'All Angles'})
+		self.menuName = Glyphs.localize({'en': 'All Angles'})
+		self.update_context_menu()
+
+	@objc.python_method
+	def update_context_menu(self):
 		self.generalContextMenus = [
-			{'name': Glyphs.localize({'en': 'Hide Line Angles '}), 'action': self.toggleLines},
-			{'name': Glyphs.localize({'en': 'Show Handle Angles'}), 'action': self.toggleHandles}
+			{'name': Glyphs.localize({'en': 'Show Line Angles'}), 'action': self.toggleLines, 'state': self.show_lines},
+			{'name': Glyphs.localize({'en': 'Show Handle Angles'}), 'action': self.toggleHandles, 'state': self.show_handles}
 		]
 
 	@objc.python_method
@@ -152,11 +152,13 @@ class AllAngles(ReporterPlugin):
 		drawing the angles on lines and handles, given the current visibility of
 		line indicators and handle indicators.
 		"""
+		show_lines = self.show_lines
+		show_handles = self.show_handles
 		for path in layer.paths:
 			for segment in path.segments:
-				if len(segment) == 2 and self.show_lines:
+				if len(segment) == 2 and show_lines:
 					self.render_indicator_for_line(segment[0], segment[1], draw_color=LINE_COLOR)
-				elif len(segment) == 4 and self.show_handles:
+				elif len(segment) == 4 and show_handles:
 					self.render_indicator_for_line(segment[0], segment[1], draw_color=HANDLE_COLOR)
 					self.render_indicator_for_line(segment[2], segment[3], draw_color=HANDLE_COLOR)
 
@@ -201,9 +203,8 @@ class AllAngles(ReporterPlugin):
 		is interacted with. Can we fix this?
 		"""
 		self.show_lines = not self.show_lines
-		menuName = 'Hide Line Angles' if self.show_lines else 'Show Line Angles'
-		self.generalContextMenus[0] = {'name': Glyphs.localize({'en': menuName}), 'action': self.toggleLines}
 		self.refresh_view()
+		self.update_context_menu()
 
 	def toggleHandles(self):
 		"""Toggles whether or not to show handle angles in the canvas. Also
@@ -213,9 +214,24 @@ class AllAngles(ReporterPlugin):
 		is interacted with. Can we fix this?
 		"""
 		self.show_handles = not self.show_handles
-		menuName = 'Hide Handle Angles' if self.show_handles else 'Show Handle Angles'
-		self.generalContextMenus[1] = {'name': Glyphs.localize({'en': menuName}), 'action': self.toggleHandles}
 		self.refresh_view()
+		self.update_context_menu()
+
+	@property
+	def show_lines(self):
+		return Glyphs.boolDefaults["AllAnglesShowLineAngles"]
+
+	@show_lines.setter
+	def show_lines(self, value):
+		Glyphs.boolDefaults["AllAnglesShowLineAngles"] = value
+
+	@property
+	def show_handles(self):
+		return Glyphs.boolDefaults["AllAnglesShowHandleAngles"]
+
+	@show_handles.setter
+	def show_handles(self, value):
+		Glyphs.boolDefaults["AllAnglesShowHandleAngles"] = value
 
 	@objc.python_method
 	def draw_indicator(self, start, end):
