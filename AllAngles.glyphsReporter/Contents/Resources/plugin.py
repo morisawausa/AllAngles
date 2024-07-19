@@ -37,8 +37,6 @@ PRECISION=1
 # Mini 2d vector manipulation library. All methods take vectors 2d vectors
 # as a list of components, and return components (or angles in degrees).
 # =======
-
-@objc.python_method
 def get_unit_vector(x, y):
 	"""Given 2d vector compenents x and y as floats,
 	returns the unit vector in the same direction
@@ -48,7 +46,6 @@ def get_unit_vector(x, y):
 	return x / length, y / length
 
 
-@objc.python_method
 def get_vector_angle(x, y):
 	"""Given 2d vector compenents x and y as floats,
 	returns the degrees from the horizontal of that vector.
@@ -62,7 +59,6 @@ def get_vector_angle(x, y):
 	return degrees(atan2(x_norm, y_norm)) % 180
 
 
-@objc.python_method
 def get_rotated_vector(x, y, angle=3*pi/2):
 	"""Given 2d vector compenents x and y as floats,
 	rotate that vector by "angle" degrees, and return
@@ -71,7 +67,6 @@ def get_rotated_vector(x, y, angle=3*pi/2):
 	return cos(angle)*x - sin(angle)*y, sin(angle)*x + cos(angle)*y
 
 
-@objc.python_method
 def get_intermediate_from_points(x1, y1, x2, y2, t=0.5):
 	"""Given a line defined by two vectors as component floats,
 	return a point interpolated along the line between the two vectors,
@@ -80,7 +75,6 @@ def get_intermediate_from_points(x1, y1, x2, y2, t=0.5):
 	return t * (x2 - x1) + x1, t * (y2 - y1) + y1
 
 
-@objc.python_method
 def get_points_from_line(segment):
 	"""Given a pair of NSPoints (a segment representing a line from Glyphs)
 	return points defining that line as a list of component floats.
