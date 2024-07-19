@@ -225,7 +225,7 @@ class AllAngles(ReporterPlugin):
 		linePath = NSBezierPath.bezierPath()
 		linePath.moveToPoint_(start)
 		linePath.lineToPoint_(end)
-		linePath.setLineWidth_(1 / self.getScale())
+		linePath.setLineWidth_(0.8 / self.getScale())
 		linePath.stroke()
 
 	@objc.python_method
