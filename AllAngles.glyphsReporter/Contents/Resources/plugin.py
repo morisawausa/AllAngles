@@ -17,9 +17,9 @@ from __future__ import division, print_function, unicode_literals
 
 from math import atan2, sqrt, pi, degrees, cos, sin
 import objc
-from AppKit import NSColor
-from GlyphsApp import *
-from GlyphsApp.plugins import *
+from Cocoa import NSColor, NSPoint, NSBezierPath
+from GlyphsApp import Glyphs
+from GlyphsApp.plugins import ReporterPlugin
 
 # =======
 # Constants:
