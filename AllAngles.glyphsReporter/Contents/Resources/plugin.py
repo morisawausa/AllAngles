@@ -17,8 +17,8 @@ from __future__ import division, print_function, unicode_literals
 
 from math import atan2, sqrt, pi, degrees, cos, sin
 import objc
-from Cocoa import NSColor, NSPoint, NSBezierPath
-from GlyphsApp import Glyphs
+from Cocoa import NSColor, NSPoint, NSBezierPath, NSBundle
+from GlyphsApp import Glyphs, GSFont
 from GlyphsApp.plugins import ReporterPlugin
 
 # =======
@@ -81,6 +81,9 @@ def get_points_from_line(segment):
 	"""
 	start, end = segment
 	return start.x, start.y, end.x, end.y
+
+bundle = NSBundle.bundleForClass_(GSFont)
+objc.loadBundleFunctions(bundle, globals(), [("GSFloatToStringWithPrecisionLocalized", b'@di')])
 
 
 # =======
@@ -149,7 +152,7 @@ class AllAngles(ReporterPlugin):
 
 		# 1.1 Prettyprint the Angle with the degree sign,
 		# to the desired precision
-		pretty_angle = u"%s°" % str(round(theta, PRECISION))
+		pretty_angle = GSFloatToStringWithPrecisionLocalized(theta, PRECISION) + "°"
 
 		# 2.0 Generate the off-curve endpoint of the indicator pointing from the
 		# Angle to the curve it describes.
