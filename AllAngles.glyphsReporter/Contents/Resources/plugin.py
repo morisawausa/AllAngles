@@ -3,12 +3,12 @@ from __future__ import division, print_function, unicode_literals
 
 ###########################################################################################################
 #
-#	AllAngles Reporter Plugin
+# AllAngles Reporter Plugin
 #
-#	This reporter shows the angle from the horizontal of all straight lines in the active
-# 	layer in the Glyphs edit view. This includes straight line segments, and the handles of
-# 	of curves. Angles are given to .1 degree of precision. All indicators can be toggled
-# 	on and off in the context menu, while the reporter is active.
+# This reporter shows the angle from the horizontal of all straight lines in the active
+# layer in the Glyphs edit view. This includes straight line segments, and the handles of
+# of curves. Angles are given to .1 degree of precision. All indicators can be toggled
+# on and off in the context menu, while the reporter is active.
 #
 #   Developed by Nic Schumann for Occupant Fonts.
 #   Copyright 2020, Occupant Fonts
@@ -17,9 +17,9 @@ from __future__ import division, print_function, unicode_literals
 
 from math import atan2, sqrt, pi, degrees, cos, sin
 import objc
-from AppKit import NSColor
-from GlyphsApp import *
-from GlyphsApp.plugins import *
+from Cocoa import NSColor, NSPoint, NSBezierPath, NSBundle
+from GlyphsApp import Glyphs, GSFont
+from GlyphsApp.plugins import ReporterPlugin
 
 # =======
 # Constants:
@@ -28,19 +28,17 @@ from GlyphsApp.plugins import *
 #    When printing angles.
 # =======
 
-LINE_COLOR=(56/256, 217/256, 137/256, 1)
-HANDLE_COLOR=(217/256, 56/256, 107/256, 1)
-PRECISION=1
+LINE_COLOR = NSColor.colorWithCalibratedRed_green_blue_alpha_(56 / 256, 217 / 256, 137 / 256, 1)
+HANDLE_COLOR = NSColor.colorWithCalibratedRed_green_blue_alpha_(217 / 256, 56 / 256, 107 / 256, 1)
+PRECISION = 1
 
 
 # =======
 # Mini 2d vector manipulation library. All methods take vectors 2d vectors
 # as a list of components, and return components (or angles in degrees).
 # =======
-
-@objc.python_method
 def get_unit_vector(x, y):
-	"""Given 2d vector compenents x and y as floats,
+	"""Given 2d vector components x and y as floats,
 	returns the unit vector in the same direction
 	as the given vector (x, y).
 	"""
@@ -48,9 +46,8 @@ def get_unit_vector(x, y):
 	return x / length, y / length
 
 
-@objc.python_method
 def get_vector_angle(x, y):
-	"""Given 2d vector compenents x and y as floats,
+	"""Given 2d vector components x and y as floats,
 	returns the degrees from the horizontal of that vector.
 	The return value is clamped into the range [0, 180), so that
 	angles in the bottom two quadrants of the unit circle are
@@ -62,16 +59,14 @@ def get_vector_angle(x, y):
 	return degrees(atan2(x_norm, y_norm)) % 180
 
 
-@objc.python_method
-def get_rotated_vector(x, y, angle=3*pi/2):
-	"""Given 2d vector compenents x and y as floats,
+def get_rotated_vector(x, y, angle=3 * pi / 2):
+	"""Given 2d vector components x and y as floats,
 	rotate that vector by "angle" degrees, and return
 	the components of the rotated vector.
 	"""
-	return cos(angle)*x - sin(angle)*y, sin(angle)*x + cos(angle)*y
+	return cos(angle) * x - sin(angle) * y, sin(angle) * x + cos(angle) * y
 
 
-@objc.python_method
 def get_intermediate_from_points(x1, y1, x2, y2, t=0.5):
 	"""Given a line defined by two vectors as component floats,
 	return a point interpolated along the line between the two vectors,
@@ -80,38 +75,62 @@ def get_intermediate_from_points(x1, y1, x2, y2, t=0.5):
 	return t * (x2 - x1) + x1, t * (y2 - y1) + y1
 
 
-@objc.python_method
-def get_points_from_line(segment):
-	"""Given a pair of NSPoints (a segment representing a line from Glyphs)
-	return points defining that line as a list of component floats.
-	"""
-	start, end = segment
-	return start.x, start.y, end.x, end.y
+def determine_quadrant(x1, y1, x2, y2):
+	# Calculate the differences
+	dx = x2 - x1
+	dy = y2 - y1
+
+	# Calculate the angle in degrees
+	angle = atan2(dy, dx) * 180 / pi
+	angle += 90
+	# Normalize the angle to [0, 360)
+	if angle < 0:
+		angle += 360
+
+	# Determine the quadrant
+	if angle >= 337.5 or angle < 22.5:
+		return "right"
+	elif angle >= 22.5 and angle < 67.5:
+		return "topright"
+	elif angle >= 67.5 and angle < 112.5:
+		return "topcenter"
+	elif angle >= 112.5 and angle < 157.5:
+		return "topleft"
+	elif angle >= 157.5 and angle < 202.5:
+		return "left"
+	elif angle >= 202.5 and angle < 247.5:
+		return "bottomleft"
+	elif angle >= 247.5 and angle < 292.5:
+		return "bottomcenter"
+	else:
+		return "bottomright"
+
+
+bundle = NSBundle.bundleForClass_(GSFont)
+objc.loadBundleFunctions(bundle, globals(), [("GSFloatToStringWithPrecisionLocalized", b'@di')])
+
+Glyphs.registerDefault("AllAnglesShowLineAngles", True)
+
 
 # =======
 # Reporter Plugin Class.
 # All UI and User-dependent state is managed in this class.
 # =======
-
 class AllAngles(ReporterPlugin):
-
-	# Whether to show line angles
-	show_lines = True
-
-	# Whether to show handle angles
-	show_handles = False
-
 
 	@objc.python_method
 	def settings(self):
 		"""Registers basic settings and default context menus.
 		"""
-		self.menuName = Glyphs.localize({'en': u'All Angles'})
-		self.generalContextMenus = [
-			{'name': Glyphs.localize({'en': 'Hide Line Angles '}), 'action': self.toggleLines},
-			{'name': Glyphs.localize({'en': 'Show Handle Angles'}), 'action': self.toggleHandles}
-		]
+		self.menuName = Glyphs.localize({'en': 'All Angles'})
+		self.update_context_menu()
 
+	@objc.python_method
+	def update_context_menu(self):
+		self.generalContextMenus = [
+			{'name': Glyphs.localize({'en': 'Show Line Angles'}), 'action': self.toggleLines, 'state': self.show_lines},
+			{'name': Glyphs.localize({'en': 'Show Handle Angles'}), 'action': self.toggleHandles, 'state': self.show_handles}
+		]
 
 	@objc.python_method
 	def refresh_view(self):
@@ -122,10 +141,9 @@ class AllAngles(ReporterPlugin):
 		try:
 			current_tab_view = Glyphs.font.currentTab
 			if current_tab_view:
-				current_tab_view.graphicView().setNeedsDisplay_(True)
+				current_tab_view.redraw()
 		except:
 			pass
-
 
 	@objc.python_method
 	def foreground(self, layer):
@@ -134,51 +152,48 @@ class AllAngles(ReporterPlugin):
 		drawing the angles on lines and handles, given the current visibility of
 		line indicators and handle indicators.
 		"""
+		show_lines = self.show_lines
+		show_handles = self.show_handles
 		for path in layer.paths:
 			for segment in path.segments:
-				if len(segment) == 2 and self.show_lines:
-					p1, p2 = segment[0], segment[1]
-					self.render_indicator_for_line_segment((p1, p2), draw_color=LINE_COLOR)
-				elif len(segment) == 4 and self.show_handles:
-					p1, p2, p3, p4 = segment[0], segment[1], segment[2], segment[3]
-					quad_segment_1 = (p1, p2)
-					quad_segment_2 = (p3, p4)
-					self.render_indicator_for_line_segment(quad_segment_1, draw_color=HANDLE_COLOR)
-					self.render_indicator_for_line_segment(quad_segment_2, draw_color=HANDLE_COLOR)
-
+				if len(segment) == 2 and show_lines:
+					self.render_indicator_for_line(segment[0], segment[1], draw_color=LINE_COLOR)
+				elif len(segment) == 4 and show_handles:
+					self.render_indicator_for_line(segment[0], segment[1], draw_color=HANDLE_COLOR)
+					self.render_indicator_for_line(segment[2], segment[3], draw_color=HANDLE_COLOR)
 
 	@objc.python_method
-	def render_indicator_for_line_segment(self, segment, draw_color=LINE_COLOR):
+	def render_indicator_for_line(self, p1, p2, draw_color=LINE_COLOR):
 		"""Given a segment from glyphs (a list of two NSPoints), draw an indicator
 		showing the angle of that segment with respect to the horizontal in the given "draw_color".
 		"""
 		# 1.0 Get the angle from the segment
-		x1, y1, x2, y2 = get_points_from_line(segment)
+		x1, y1 = p1.x, p1.y
+		x2, y2 = p2.x, p2.y
+
 		dx, dy = x2 - x1, y2 - y1
 		theta = get_vector_angle(dx, dy)
 
 		# 1.1 Prettyprint the Angle with the degree sign,
 		# to the desired precision
-		pretty_angle = u"%s°" % str(round(theta, PRECISION))
+		pretty_angle = GSFloatToStringWithPrecisionLocalized(theta, PRECISION) + "°"
 
 		# 2.0 Generate the off-curve endpoint of the indicator pointing from the
 		# Angle to the curve it describes.
-		offset_scale = 14/self.getScale()
+		offset_scale = 14 / self.getScale()
 		x_mid, y_mid = get_intermediate_from_points(x1, y1, x2, y2)
 		x_norm, y_norm = get_unit_vector(x2 - x1, y2 - y1)
 		x_orth, y_orth = get_rotated_vector(x_norm, y_norm)
-		x_mid_offset, y_mid_offset = x_mid+offset_scale*x_orth, y_mid+offset_scale*y_orth
-
-		color = NSColor.colorWithCalibratedRed_green_blue_alpha_(*draw_color)
+		x_mid_offset, y_mid_offset = x_mid + offset_scale * x_orth, y_mid + offset_scale * y_orth
 
 		# 3.0 Generate the anchor for the text so that it's positioned more or less
 		# Appropriately relative to the indicator line.
-		x_text_anchor, y_text_anchor = self.get_text_anchor(pretty_angle, x_mid, y_mid, x_mid_offset, y_mid_offset)
+		align = determine_quadrant(x1, y1, x2, y2)
 
 		# 4.0 Draw everything to the canvas.
-		color.set()
+		draw_color.set()
 		self.draw_indicator((x_mid, y_mid), (x_mid_offset, y_mid_offset))
-		self.drawTextAtPoint(pretty_angle, NSPoint(x_text_anchor, y_text_anchor), fontColor=color )
+		self.drawTextAtPoint(pretty_angle, NSPoint(x_mid_offset, y_mid_offset), fontColor=draw_color, align=align)
 
 	def toggleLines(self):
 		"""Toggles whether or not to show line angles in the canvas. Also
@@ -188,10 +203,8 @@ class AllAngles(ReporterPlugin):
 		is interacted with. Can we fix this?
 		"""
 		self.show_lines = not self.show_lines
-		menuName = 'Hide Line Angles' if self.show_lines else 'Show Line Angles'
-		self.generalContextMenus[0] = {'name': Glyphs.localize({'en': menuName}), 'action': self.toggleLines}
 		self.refresh_view()
-
+		self.update_context_menu()
 
 	def toggleHandles(self):
 		"""Toggles whether or not to show handle angles in the canvas. Also
@@ -201,10 +214,24 @@ class AllAngles(ReporterPlugin):
 		is interacted with. Can we fix this?
 		"""
 		self.show_handles = not self.show_handles
-		menuName = 'Hide Handle Angles' if self.show_handles else 'Show Handle Angles'
-		self.generalContextMenus[1] = {'name': Glyphs.localize({'en': menuName}), 'action': self.toggleHandles}
 		self.refresh_view()
+		self.update_context_menu()
 
+	@property
+	def show_lines(self):
+		return Glyphs.boolDefaults["AllAnglesShowLineAngles"]
+
+	@show_lines.setter
+	def show_lines(self, value):
+		Glyphs.boolDefaults["AllAnglesShowLineAngles"] = value
+
+	@property
+	def show_handles(self):
+		return Glyphs.boolDefaults["AllAnglesShowHandleAngles"]
+
+	@show_handles.setter
+	def show_handles(self, value):
+		Glyphs.boolDefaults["AllAnglesShowHandleAngles"] = value
 
 	@objc.python_method
 	def draw_indicator(self, start, end):
@@ -214,41 +241,8 @@ class AllAngles(ReporterPlugin):
 		linePath = NSBezierPath.bezierPath()
 		linePath.moveToPoint_(start)
 		linePath.lineToPoint_(end)
-		linePath.setLineWidth_(1/self.getScale())
+		linePath.setLineWidth_(0.8 / self.getScale())
 		linePath.stroke()
-
-
-	@objc.python_method
-	def get_text_anchor(self, text, x1, y1, x2, y2):
-		"""Given a line as a pair of endpoints (a list of coordinate floats),
-		create an offset text-anchor point such that the given "text" is well-aligned
-		to the specified line, and return the anchor point as a pair of floats.
-		"""
-		CHARWIDTH=6 # Magic number for approximating the width of a drawn character
-		CHARHEIGHT=12 # Magic number for approximating the height of a drawn character
-
-		o_x = len(text)/self.getScale()
-		o_y = 1/self.getScale()
-		buffer = 8/self.getScale()
-
-		x_anchor, y_anchor = x2, y2
-
-		if x2 < x1:
-			x_anchor -= CHARWIDTH * o_x
-		elif x2 == x1:
-			x_anchor -= CHARWIDTH * o_x / 3
-			y_anchor += buffer if y2 > y1 else -buffer*0.8
-
-		if y2 < y1:
-			y_anchor -= CHARHEIGHT * o_y
-		elif y2 == y1:
-			y_anchor -= (CHARHEIGHT/2) * o_y
-			x_anchor += buffer if x2 > x1 else -buffer
-		else:
-			y_anchor -= (CHARHEIGHT/2) * o_y
-
-		return x_anchor, y_anchor
-
 
 	@objc.python_method
 	def __file__(self):
